@@ -5,13 +5,13 @@ def build_kubectl_options_block(user_id, available_commands):
                 "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": f"\nHello <@{user_id}>! Please select a kubectl command:\n\n"
+                            "text": f"\nHello <@{user_id}>! Select a kubectl command:\n\n"
                         },
                 "accessory": {
                             "type": "image",
                             "image_url": "https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png",
                             "alt_text": "computer thumbnail"
-                        }
+                        },
             },
             {
                 "type": "actions",
