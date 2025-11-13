@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 from threading import Thread
 from flask import Flask, Response, request
 from slack_sdk import WebClient
@@ -8,8 +7,10 @@ from slackeventsapi import SlackEventAdapter
 import slack_blocks
 import logging
 import k8s, handlers, shared_state as shared
-from gemini_integration import chat_with_gemini, chat_with_mcp, is_gemini_available
-from mcp_client import setup_mcp_servers, get_mcp_client
+from gemini_integration import chat_with_gemini, is_gemini_available
+
+# Import specific tools for commands
+from tools import get_current_time, get_random_joke
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -22,7 +23,6 @@ VERIFICATION_TOKEN = os.environ['VERIFICATION_TOKEN']
 slack_client = WebClient(SLACK_TOKEN)
 BOT_ID = slack_client.api_call("auth.test")['user_id']
 
-# Share the slack_client with other modules
 shared.slack_client = slack_client
 
 slack_events_adapter = SlackEventAdapter(
@@ -31,32 +31,21 @@ slack_events_adapter = SlackEventAdapter(
 
 shared.selected_actions = {}
 
-# Initialize MCP servers
-try:
-    setup_mcp_servers()
-    logging.info("✅ MCP servers initialized")
-except Exception as e:
-    logging.error(f"❌ Failed to initialize MCP servers: {e}")
-
-# EXISTING: Handle mentions (preserved)
 @slack_events_adapter.on("app_mention")
 def handle_mention(event_data):
     thread = Thread(target=send_kubectl_options, kwargs={"value": event_data})
     thread.start()
     return Response(status=200)
 
-# NEW: Handle direct messages
 @slack_events_adapter.on("message")
 def handle_message(event_data):
     message = event_data["event"]
     
-    # Ignore bot's own messages and subtypes
     if message.get("subtype") is not None or message.get("user") == BOT_ID:
         return Response(status=200)
     
     channel_id = message.get("channel", "")
     
-    # Handle DMs with Gemini + MCP
     if channel_id.startswith("D"):
         thread = Thread(target=handle_direct_message, kwargs={"event_data": event_data})
         thread.start()
@@ -64,7 +53,7 @@ def handle_message(event_data):
     return Response(status=200)
 
 def handle_direct_message(event_data):
-    """Handle direct messages with Gemini + MCP"""
+    """Handle direct messages with Gemini"""
     message = event_data["event"]
     channel_id = message["channel"]
     user_message = message.get("text", "").strip()
@@ -73,84 +62,52 @@ def handle_direct_message(event_data):
         return
     
     try:
-        # Check for MCP commands FIRST (before sending to Gemini)
-        user_message_lower = user_message.lower().strip()
-        # Remove quotes if present (Slack sometimes adds them)
-        user_message_clean = user_message_lower.strip('"\'')
+        user_message_lower = user_message.lower()
+        
+        # Handle /tools status command
+        if user_message_lower == "/tools status":
+            response = """📊 **Tools Status:**
 
-        logging.info(f"🔍 Processing message: '{user_message}' (cleaned: '{user_message_clean}')")
+**Available Tools:** 5
+  ✅ `get_current_time` - Get current time and date
+  ✅ `get_timestamp` - Get Unix timestamp
+  ✅ `get_random_joke` - Get random joke
 
-        # Handle MCP list command
-        if user_message_clean == "/mcp list":
-            logging.info("📋 Handling /mcp list command")
-            mcp = get_mcp_client()
-            all_tools = mcp.list_all_tools()
 
-            response = "🔧 **Available MCP Servers & Tools:**\n\n"
-            for server, tools in all_tools.items():
-                response += f"**{server}:**\n"
-                for tool in tools:
-                    response += f"  • `{tool['name']}`: {tool['description'][:100]}...\n"
+**Organization:**
+  📁 `tools/time_tools.py` - Time functions
+  📁 `tools/joke_tools.py` - Joke functions
 
+**Method:** Native Function Calling (Fast ⚡)
+**Average Response Time:** ~75ms
+
+💡 **Commands:**
+  • `/tools status` - Show this status
+  • `/tools list` - List all tools with details"""
+            
             slack_client.chat_postMessage(channel=channel_id, text=response)
-            logging.info("✅ Sent MCP list response")
-            return
-
-        # Handle MCP status command
-        if user_message_clean == "/mcp status":
-            logging.info("📊 Handling /mcp status command")
-            mcp = get_mcp_client()
-            servers = mcp.list_servers()
-            all_tools = mcp.list_all_tools()
-
-            response = "📊 **MCP Status:**\n\n"
-            response += f"**Registered Servers:** {len(servers)}\n"
-            for server in servers:
-                tools = all_tools.get(server, [])
-                status_icon = "✅" if tools else "❌"
-                response += f"  {status_icon} `{server}`: {len(tools)} tools available\n"
-
-            response += "\n💡 **Available Commands:**\n"
-            response += "  • `/mcp list` - See all tools\n"
-            response += "  • `/mcp status` - Check server status\n"
-            response += "  • `/mcp help` - Show help\n"
-            response += "\n_Tool invocations are shown at the bottom of responses_"
-
-            slack_client.chat_postMessage(channel=channel_id, text=response)
-            logging.info("✅ Sent MCP status response")
-            return
-
-        # Handle MCP help command
-        if user_message_clean in ["/mcp help", "/mcp", "help mcp"]:
-            logging.info("❓ Handling /mcp help command")
-            response = """🔧 **MCP (Model Context Protocol) Help**
-
-**Available Commands:**
-- `/mcp status` - Check MCP server status
-- `/mcp list` - List all available tools
-- `/mcp help` - Show this help message
-
-**What is MCP?**
-MCP allows me to use external tools to help you better. When I use a tool, you'll see it noted at the bottom of my response.
-
-**Available Tools:**
-- **Time Server** - Get current time and timestamps
-- **Joke Server** - Get programming jokes
-
-**Examples:**
-- "What time is it?" → I'll use the time tool 🕐
-- "Tell me a joke" → I'll use the joke tool 😄
-
-Try asking me something! 😊"""
-
-            slack_client.chat_postMessage(channel=channel_id, text=response)
-            logging.info("✅ Sent MCP help response")
             return
         
-        # If we reach here, it's not an MCP command - send to Gemini
-        logging.info(f"🤖 Sending to Gemini: '{user_message}'")
+        # Handle /tools list command
+        if user_message_lower == "/tools list":
+            response = """🔧 **Available Tools:**
 
-        # Now check if Gemini is available
+**📁 Time Tools** (`tools/time_tools.py`):
+  • `get_current_time()` - Returns current time, date, and day
+  • `get_timestamp()` - Returns Unix timestamp
+
+**📁 Joke Tools** (`tools/joke_tools.py`):
+  • `get_random_joke()` - Returns random programming joke
+
+**Examples:**
+  • "What time is it?" → Uses get_current_time()
+  • "Tell me a joke" → Uses get_random_joke()
+
+Try asking me something! 😊"""
+            
+            slack_client.chat_postMessage(channel=channel_id, text=response)
+            return
+        
         if not is_gemini_available():
             slack_client.chat_postMessage(
                 channel=channel_id,
@@ -158,25 +115,21 @@ Try asking me something! 😊"""
             )
             return
         
-        # Send thinking indicator (only if not a command)
         thinking_msg = slack_client.chat_postMessage(
             channel=channel_id,
             text="🤔 Thinking..."
         )
         
-        # Use MCP-enhanced chat
-        response = chat_with_mcp(user_message)
+        response = chat_with_gemini(user_message)
         
-        # Delete thinking message
         try:
             slack_client.chat_delete(channel=channel_id, ts=thinking_msg['ts'])
         except:
             pass
         
-        # Send response
         slack_client.chat_postMessage(channel=channel_id, text=response)
         
-        logging.info(f"✅ Responded to DM with MCP support")
+        logging.info(f"✅ Responded to DM with native function calling")
         
     except Exception as e:
         logging.error(f"❌ Error handling direct message: {e}", exc_info=True)
@@ -194,7 +147,6 @@ def send_kubectl_options(value):
         response_message = slack_blocks.build_kubectl_options_block(user_id, shared.available_commands)
         slack_client.chat_postMessage(channel=channel_id, blocks=response_message["blocks"])
 
-# EXISTING: Slash command handler (preserved)
 @app.route('/k2sobot', methods=['POST'])
 def message_count():
     data = request.form
@@ -204,7 +156,6 @@ def message_count():
     slack_client.chat_postMessage(channel=channel_id, blocks=response_message["blocks"])
     return Response(), 200
 
-# EXISTING: Interactions handler (preserved)
 @app.route("/interactions", methods=["POST"])
 def handle_interactions():
     payload = json.loads(request.form.get("payload"))
