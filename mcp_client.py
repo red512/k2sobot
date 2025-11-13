@@ -1,22 +1,21 @@
 """
-MCP Client for Slackbot
-Manages connections to multiple MCP servers
+Simplified MCP Client for Slackbot
+Uses subprocess with timeout for reliability
 """
-import asyncio
+import subprocess
+import json
 import logging
-from typing import List, Dict, Any, Optional
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from contextlib import asynccontextmanager
+import os
+import sys
+from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-class MCPManager:
-    """Manages multiple MCP server connections"""
+class MCPClient:  # Keep the same name!
+    """Simplified MCP Client using subprocess"""
     
     def __init__(self):
         self.servers: Dict[str, dict] = {}
-        self.sessions: Dict[str, ClientSession] = {}
         
     def register_server(self, name: str, command: str, args: List[str], env: Optional[Dict] = None):
         """Register an MCP server"""
@@ -25,141 +24,176 @@ class MCPManager:
             "args": args,
             "env": env or {}
         }
-        logger.info(f"Registered MCP server: {name}")
+        logger.info(f"✅ Registered MCP server: {name}")
     
-    async def connect_server(self, name: str):
-        """Connect to a specific MCP server"""
-        if name not in self.servers:
-            raise ValueError(f"Server {name} not registered")
+    def list_servers(self) -> List[str]:
+        """List all registered servers"""
+        return list(self.servers.keys())
+    
+    def _call_mcp_server(self, server_name: str, method: str, params: dict = None, timeout: int = 5) -> dict:
+        """Call MCP server via subprocess with timeout"""
+        if server_name not in self.servers:
+            raise ValueError(f"Server '{server_name}' not registered")
         
-        server_config = self.servers[name]
-        server_params = StdioServerParameters(
-            command=server_config["command"],
-            args=server_config["args"],
-            env=server_config["env"]
-        )
+        server_config = self.servers[server_name]
+        
+        # Build JSON-RPC request
+        request = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": method,
+            "params": params or {}
+        }
         
         try:
-            stdio_transport = await stdio_client(server_params)
-            session = ClientSession(stdio_transport[0], stdio_transport[1])
-            await session.initialize()
+            logger.debug(f"Calling {server_name}: {method}")
             
-            self.sessions[name] = session
-            logger.info(f"Connected to MCP server: {name}")
-            return session
+            # Prepare environment
+            env = {**os.environ.copy(), **server_config["env"]}
+            
+            # Call server with timeout
+            process = subprocess.Popen(
+                [server_config["command"]] + server_config["args"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                text=True
+            )
+            
+            # Send request and wait for response with timeout
+            stdout, stderr = process.communicate(
+                input=json.dumps(request) + "\n",
+                timeout=timeout
+            )
+            
+            if stderr:
+                logger.debug(f"Server stderr: {stderr}")
+            
+            if not stdout.strip():
+                raise Exception("Empty response from server")
+            
+            # Parse response (handle multiple lines)
+            lines = stdout.strip().split('\n')
+            for line in lines:
+                if line.strip():
+                    try:
+                        response = json.loads(line)
+                        if "error" in response:
+                            raise Exception(f"Server error: {response['error']}")
+                        return response
+                    except json.JSONDecodeError:
+                        continue
+            
+            raise Exception("No valid JSON response found")
+            
+        except subprocess.TimeoutExpired:
+            process.kill()
+            raise Exception(f"MCP server '{server_name}' timeout after {timeout}s")
         except Exception as e:
-            logger.error(f"Failed to connect to {name}: {e}")
+            logger.error(f"MCP call failed: {e}")
             raise
     
-    async def disconnect_server(self, name: str):
-        """Disconnect from a specific MCP server"""
-        if name in self.sessions:
-            await self.sessions[name].close()
-            del self.sessions[name]
-            logger.info(f"Disconnected from MCP server: {name}")
+    def list_tools(self, server_name: str) -> List[Dict]:
+        """List tools from a server"""
+        try:
+            response = self._call_mcp_server(server_name, "tools/list")
+            
+            tools = response.get("result", {}).get("tools", [])
+            
+            return [
+                {
+                    "name": tool.get("name"),
+                    "description": tool.get("description"),
+                    "inputSchema": tool.get("inputSchema", {})
+                }
+                for tool in tools
+            ]
+        except Exception as e:
+            logger.error(f"Failed to list tools from {server_name}: {e}")
+            return []
     
-    async def list_tools(self, server_name: str) -> List[Dict]:
-        """List available tools from a server"""
-        if server_name not in self.sessions:
-            await self.connect_server(server_name)
-        
-        session = self.sessions[server_name]
-        tools = await session.list_tools()
-        return tools.tools
+    def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> str:
+        """Call a tool on a server"""
+        try:
+            logger.info(f"Calling tool: {server_name}.{tool_name} with {arguments}")
+            
+            response = self._call_mcp_server(
+                server_name,
+                "tools/call",
+                {"name": tool_name, "arguments": arguments}
+            )
+            
+            result = response.get("result", {})
+            content = result.get("content", [])
+            
+            if content and len(content) > 0:
+                return content[0].get("text", "No result")
+            
+            return "No result"
+            
+        except Exception as e:
+            logger.error(f"Failed to call {server_name}.{tool_name}: {e}")
+            return f"Error: {str(e)}"
     
-    async def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> Any:
-        """Call a tool on a specific server"""
-        if server_name not in self.sessions:
-            await self.connect_server(server_name)
-        
-        session = self.sessions[server_name]
-        result = await session.call_tool(tool_name, arguments)
-        return result
-    
-    async def list_all_tools(self) -> Dict[str, List[Dict]]:
-        """List all tools from all registered servers"""
+    def list_all_tools(self) -> Dict[str, List[Dict]]:
+        """List all tools from all servers"""
         all_tools = {}
         for server_name in self.servers:
             try:
-                tools = await self.list_tools(server_name)
+                tools = self.list_tools(server_name)
                 all_tools[server_name] = tools
+                if tools:
+                    logger.info(f"✅ Listed {len(tools)} tools from {server_name}")
             except Exception as e:
                 logger.error(f"Failed to list tools from {server_name}: {e}")
                 all_tools[server_name] = []
         return all_tools
-    
-    async def cleanup(self):
-        """Disconnect from all servers"""
-        for name in list(self.sessions.keys()):
-            await self.disconnect_server(name)
 
 
-# Global MCP manager instance
-mcp_manager = MCPManager()
+# Global MCP client instance
+mcp_client = MCPClient()
 
 
 def setup_mcp_servers():
-    """Setup and register all MCP servers"""
-    import os
+    """Setup and register MCP servers"""
     
-    # 1. Filesystem MCP - Access local files
-    mcp_manager.register_server(
-        name="filesystem",
-        command="npx",
-        args=[
-            "-y",
-            "@modelcontextprotocol/server-filesystem",
-            "/tmp/slackbot-files"  # Allowed directory
-        ]
-    )
+    python_path = sys.executable
+    logger.info(f"🐍 Using Python interpreter: {python_path}")
     
-    # 2. Memory MCP - Persistent memory
-    mcp_manager.register_server(
-        name="memory",
-        command="npx",
-        args=["-y", "@modelcontextprotocol/server-memory"]
-    )
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logger.info(f"📁 Script directory: {script_dir}")
     
-    # 3. GitHub MCP - If you have a token
-    github_token = os.environ.get("GITHUB_TOKEN")
-    if github_token:
-        mcp_manager.register_server(
-            name="github",
-            command="npx",
-            args=["-y", "@modelcontextprotocol/server-github"],
-            env={"GITHUB_PERSONAL_ACCESS_TOKEN": github_token}
+    # 1. Time MCP Server
+    time_server_path = os.path.join(script_dir, "time_mcp_server.py")
+    if os.path.exists(time_server_path):
+        logger.info(f"✅ Found time server file")
+        mcp_client.register_server(
+            name="time",
+            command=python_path,
+            args=[time_server_path]
         )
+    else:
+        logger.error(f"❌ Time server not found: {time_server_path}")
     
-    # 4. Custom Kubernetes MCP - Your own server!
-    mcp_manager.register_server(
-        name="kubernetes",
-        command="python",
-        args=["/path/to/k8s_mcp_server.py"]
-    )
-    
-    logger.info("MCP servers registered")
-
-
-# Async wrapper for use in sync Flask context
-def run_mcp_tool(server_name: str, tool_name: str, arguments: Dict[str, Any]):
-    """Synchronous wrapper for MCP tool calls"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(
-            mcp_manager.call_tool(server_name, tool_name, arguments)
+    # 2. Joke MCP Server
+    joke_server_path = os.path.join(script_dir, "joke_mcp_server.py")
+    if os.path.exists(joke_server_path):
+        logger.info(f"✅ Found joke server file")
+        mcp_client.register_server(
+            name="joke",
+            command=python_path,
+            args=[joke_server_path]
         )
-        return result
-    finally:
-        loop.close()
+    else:
+        logger.error(f"❌ Joke server not found: {joke_server_path}")
+    
+    registered = mcp_client.list_servers()
+    logger.info(f"✅ MCP setup complete. Registered servers: {registered}")
+    
+    return registered
 
 
-def list_mcp_tools():
-    """Synchronous wrapper to list all MCP tools"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(mcp_manager.list_all_tools())
-        return result
-    finally:
-        loop.close()
+def get_mcp_client() -> MCPClient:
+    """Get the global MCP client instance"""
+    return mcp_client
