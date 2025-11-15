@@ -1,5 +1,4 @@
 import json
-import os
 from threading import Thread
 from flask import Flask, Response, request
 from slack_sdk import WebClient
@@ -8,6 +7,7 @@ import slack_blocks
 import logging
 import k8s, handlers, shared_state as shared
 from gemini_integration import chat_with_gemini, is_gemini_available
+from config import SLACK_SIGNING_SECRET, SLACK_TOKEN, VERIFICATION_TOKEN
 
 # Import specific tools for commands
 from tools import get_current_time, get_random_joke
@@ -15,10 +15,6 @@ from tools import get_current_time, get_random_joke
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
-
-SLACK_SIGNING_SECRET = os.environ['SLACK_SIGNING_SECRET']
-SLACK_TOKEN = os.environ['SLACK_BOT_TOKEN']
-VERIFICATION_TOKEN = os.environ['VERIFICATION_TOKEN']
 
 slack_client = WebClient(SLACK_TOKEN)
 BOT_ID = slack_client.api_call("auth.test")['user_id']
@@ -64,49 +60,6 @@ def handle_direct_message(event_data):
     try:
         user_message_lower = user_message.lower()
         
-        # Handle /tools status command
-        if user_message_lower == "/tools status":
-            response = """📊 **Tools Status:**
-
-**Available Tools:** 5
-  ✅ `get_current_time` - Get current time and date
-  ✅ `get_timestamp` - Get Unix timestamp
-  ✅ `get_random_joke` - Get random joke
-
-
-**Organization:**
-  📁 `tools/time_tools.py` - Time functions
-  📁 `tools/joke_tools.py` - Joke functions
-
-**Method:** Native Function Calling (Fast ⚡)
-**Average Response Time:** ~75ms
-
-💡 **Commands:**
-  • `/tools status` - Show this status
-  • `/tools list` - List all tools with details"""
-            
-            slack_client.chat_postMessage(channel=channel_id, text=response)
-            return
-        
-        # Handle /tools list command
-        if user_message_lower == "/tools list":
-            response = """🔧 **Available Tools:**
-
-**📁 Time Tools** (`tools/time_tools.py`):
-  • `get_current_time()` - Returns current time, date, and day
-  • `get_timestamp()` - Returns Unix timestamp
-
-**📁 Joke Tools** (`tools/joke_tools.py`):
-  • `get_random_joke()` - Returns random programming joke
-
-**Examples:**
-  • "What time is it?" → Uses get_current_time()
-  • "Tell me a joke" → Uses get_random_joke()
-
-Try asking me something! 😊"""
-            
-            slack_client.chat_postMessage(channel=channel_id, text=response)
-            return
         
         if not is_gemini_available():
             slack_client.chat_postMessage(

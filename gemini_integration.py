@@ -3,17 +3,8 @@ import logging
 import google.generativeai as genai
 from google.generativeai.types import content_types
 
-# Import from tools package
-from tools import (
-    get_current_time,
-    get_timestamp,
-    get_random_joke,
-    get_namespaces,
-    get_pods,
-    get_deployments,
-    get_pod_logs,
-    describe_pod,
-)
+# Import tool registry for automatic tool discovery
+from tools.registry import discover_and_get_tools, get_function_map, execute_tool
 
 logger = logging.getLogger(__name__)
 
@@ -35,25 +26,11 @@ def get_gemini_model_with_tools():
         
         genai.configure(api_key=api_key)
         
-        # Define available tools - organized by module
-        tools = [
-            # Time tools
-            get_current_time,
-            get_timestamp,
-            
-            # Joke tools
-            get_random_joke,
-            
-            # Kubernetes tools
-            get_namespaces,
-            get_pods,
-            get_deployments,
-            get_pod_logs,
-            describe_pod,
-        ]
-        
+        # Automatically discover all available tools
+        tools = discover_and_get_tools()
+
         _model = genai.GenerativeModel('gemini-2.5-flash-lite', tools=tools)
-        logger.info("✅ Initialized Gemini with 8 tools")
+        logger.info(f"✅ Initialized Gemini with {len(tools)} tools")
     
     return _model
 
@@ -61,28 +38,11 @@ def execute_function_call(function_call):
     """Execute the function that Gemini wants to call"""
     function_name = function_call.name
     function_args = dict(function_call.args) if function_call.args else {}
-    
+
     logger.info(f"🔧 {function_name}({function_args})")
-    
-    function_map = {
-        "get_current_time": get_current_time,
-        "get_timestamp": get_timestamp,
-        "get_random_joke": get_random_joke,
-        "get_namespaces": get_namespaces,
-        "get_pods": get_pods,
-        "get_deployments": get_deployments,
-        "get_pod_logs": get_pod_logs,
-        "describe_pod": describe_pod,
-    }
-    
-    if function_name in function_map:
-        try:
-            return function_map[function_name](**function_args) if function_args else function_map[function_name]()
-        except Exception as e:
-            logger.error(f"Error: {e}")
-            return {"error": str(e)}
-    else:
-        return {"error": f"Unknown function: {function_name}"}
+
+    # Use the registry to execute the tool
+    return execute_tool(function_name, **function_args)
     
 def chat_with_gemini(user_message, max_tokens=1000):
     """Chat with Gemini using native function calling"""
@@ -127,14 +87,22 @@ def chat_with_gemini(user_message, max_tokens=1000):
                 )
                 
                 # Add tool footer
-                final_response = response.text
-                if "_🔧 Tool used:" not in final_response:
-                    final_response += f"\n\n_🔧 Tool used: `{function_name}`_"
-                
-                return final_response
+                try:
+                    final_response = response.text
+                    if "_🔧 Tool used:" not in final_response:
+                        final_response += f"\n\n_🔧 Tool used: `{function_name}`_"
+                    return final_response
+                except Exception as e:
+                    logger.warning(f"Could not get response.text: {e}")
+                    # Fallback to a basic response with the result
+                    return f"Here's the result:\n\n{result}\n\n_🔧 Tool used: `{function_name}`_"
         
         # No function call, just return text
-        return response.text
+        try:
+            return response.text
+        except Exception as e:
+            logger.warning(f"Could not get response.text for direct response: {e}")
+            return "I understand your request but couldn't generate a proper response. Please try rephrasing your question."
         
     except Exception as e:
         logger.error(f"Error communicating with Gemini: {e}", exc_info=True)
