@@ -21,3 +21,31 @@ def get_pods(namespace="default"):
 def get_deployments(namespace="default"):
     """Get all deployments in a namespace"""
     return k8s.get_deployments(namespace)
+
+
+def get_pod_logs(pod_name, namespace="default", lines=50):
+    """Get logs from a pod"""
+    try:
+        cmd = ["kubectl", "logs", pod_name, "-n", namespace, "--tail", str(lines)]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=15)
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "Error: Timeout getting logs"
+    except subprocess.CalledProcessError as e:
+        return f"Error: {e.stderr}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+def describe_pod(pod_name, namespace="default"):
+    """Get detailed pod information"""
+    try:
+        cmd = ["kubectl", "describe", "pod", pod_name, "-n", namespace]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=15)
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "Error: Timeout describing pod"
+    except subprocess.CalledProcessError as e:
+        return f"Error: {e.stderr}"
+    except Exception as e:
+        return f"Error: {str(e)}"

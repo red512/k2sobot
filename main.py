@@ -52,28 +52,29 @@ def handle_direct_message(event_data):
     """Handle direct messages with Gemini"""
     message = event_data["event"]
     channel_id = message["channel"]
+    user_id = message.get("user")
     user_message = message.get("text", "").strip()
-    
+
     if not user_message:
         return
-    
+
     try:
         user_message_lower = user_message.lower()
-        
-        
+
+
         if not is_gemini_available():
             slack_client.chat_postMessage(
                 channel=channel_id,
                 text="Sorry, Gemini AI is not configured. Please contact the administrator."
             )
             return
-        
+
         thinking_msg = slack_client.chat_postMessage(
             channel=channel_id,
             text="🤔 Thinking..."
         )
-        
-        response = chat_with_gemini(user_message)
+
+        response = chat_with_gemini(user_message, user_id=user_id)
         
         try:
             slack_client.chat_delete(channel=channel_id, ts=thinking_msg['ts'])
