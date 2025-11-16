@@ -2,9 +2,6 @@
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-Latest-green.svg)](https://flask.palletsprojects.com/)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-kubectl-blue.svg)](https://kubernetes.io/)
-[![ArgoCD](https://img.shields.io/badge/ArgoCD-GitOps-orange.svg)](https://argoproj.github.io/cd/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🚀 **AI-Powered Slack Bot for Kubernetes & GitOps Operations** 
 > 
