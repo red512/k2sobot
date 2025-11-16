@@ -23,7 +23,7 @@
 
 ```mermaid
 graph TB
-    A[Slack User] -->|@k2sobot or /k2sobot| B[Flask Server :3000]
+    A[Slack User] -->|"@k2sobot or /k2sobot"| B[Flask Server :3000]
     B --> C{Request Type}
     C -->|Interactive Menu| D[kubectl Operations]
     C -->|Natural Language| E[Gemini AI + Tools]
