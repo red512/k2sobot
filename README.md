@@ -63,17 +63,6 @@ cd k2sobot
 # Build the Docker image
 docker build -t k2sobot .
 
-# Run with environment variables
-docker run -d \
-  -p 3000:3000 \
-  -e SLACK_SIGNING_SECRET="your_slack_signing_secret" \
-  -e SLACK_BOT_TOKEN="xoxb-your_bot_token" \
-  -e VERIFICATION_TOKEN="your_verification_token" \
-  -e GEMINI_API_KEY="your_gemini_api_key" \
-  --name k2sobot \
-  k2sobot
-```
-
 ### 🐍 Local Development
 
 ```bash
@@ -97,6 +86,18 @@ export GEMINI_API_KEY="your_gemini_api_key"
 # Run the bot
 python3 main.py
 ```
+
+# Run with environment variables
+docker run -d \
+  -p 3000:3000 \
+  -e SLACK_SIGNING_SECRET="your_slack_signing_secret" \
+  -e SLACK_BOT_TOKEN="xoxb-your_bot_token" \
+  -e VERIFICATION_TOKEN="your_verification_token" \
+  -e GEMINI_API_KEY="your_gemini_api_key" \
+  --name k2sobot \
+  k2sobot
+```
+
 
 ## ⚙️ Slack App Setup
 
