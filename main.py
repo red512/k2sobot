@@ -133,5 +133,34 @@ def handle_interactions():
 
     return Response(status=200)
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    """Health check endpoint for Docker and load balancers"""
+    try:
+        # Basic health checks
+        status = {
+            "status": "healthy",
+            "service": "k2sobot",
+            "version": "1.0.0",
+            "gemini_available": is_gemini_available(),
+            "timestamp": get_current_time()
+        }
+        return Response(
+            response=json.dumps(status),
+            status=200,
+            mimetype="application/json"
+        )
+    except Exception as e:
+        error_status = {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": get_current_time()
+        }
+        return Response(
+            response=json.dumps(error_status),
+            status=500,
+            mimetype="application/json"
+        )
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=3000)

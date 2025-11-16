@@ -1,1 +1,276 @@
-# k2sobot
+# K2SOBot 🤖⚓
+
+[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-Latest-green.svg)](https://flask.palletsprojects.com/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-kubectl-blue.svg)](https://kubernetes.io/)
+[![ArgoCD](https://img.shields.io/badge/ArgoCD-GitOps-orange.svg)](https://argoproj.github.io/cd/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> 🚀 **AI-Powered Slack Bot for Kubernetes & GitOps Operations** 
+> 
+> Combines interactive kubectl operations with Google Gemini AI for natural language DevOps interactions.
+
+## ✨ Features
+
+🤖 **AI-Powered Chat** - Natural language conversations with Google Gemini 2.5 Flash Lite  
+⚓ **Kubernetes Management** - Interactive kubectl operations via Slack UI  
+🚀 **GitOps Integration** - ArgoCD application management and monitoring  
+🛠️ **Modular Tools** - Auto-discovering tool system for easy extensibility  
+🔐 **Security First** - Non-root Docker container with proper permissions  
+⚡ **Real-time** - Instant responses via Slack webhooks and ngrok tunneling  
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    A[Slack User] -->|@k2sobot or /k2sobot| B[Flask Server :3000]
+    B --> C{Request Type}
+    C -->|Interactive Menu| D[kubectl Operations]
+    C -->|Natural Language| E[Gemini AI + Tools]
+    
+    D --> F[Kubernetes Cluster]
+    E --> G[Tool Registry]
+    G --> H[Time Tools]
+    G --> I[Kubernetes Tools]
+    G --> J[ArgoCD Tools]
+    G --> K[Joke Tools]
+    
+    F --> L[Formatted Response]
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+    L --> A
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- 🐍 **Python 3.13+**
+- ⚓ **kubectl** configured with cluster access
+- 🚀 **ArgoCD CLI** (optional, for GitOps features)
+- 🌐 **ngrok** (for Slack webhook tunneling)
+- 💬 **Slack workspace** with admin permissions
+
+### 🐳 Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/red512/k2sobot.git
+cd k2sobot
+
+# Build the Docker image
+docker build -t k2sobot .
+
+# Run with environment variables
+docker run -d \
+  -p 3000:3000 \
+  -e SLACK_SIGNING_SECRET="your_slack_signing_secret" \
+  -e SLACK_BOT_TOKEN="xoxb-your_bot_token" \
+  -e VERIFICATION_TOKEN="your_verification_token" \
+  -e GEMINI_API_KEY="your_gemini_api_key" \
+  --name k2sobot \
+  k2sobot
+```
+
+### 🐍 Local Development
+
+```bash
+# Clone and setup
+git clone https://github.com/red512/k2sobot.git
+cd k2sobot
+
+# Create virtual environment
+python3 -m venv env
+source env/bin/activate  # Windows: env\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export SLACK_SIGNING_SECRET="your_slack_signing_secret"
+export SLACK_BOT_TOKEN="xoxb-your_bot_token"
+export VERIFICATION_TOKEN="your_verification_token"
+export GEMINI_API_KEY="your_gemini_api_key"
+
+# Run the bot
+python3 main.py
+```
+
+## ⚙️ Slack App Setup
+
+### 1. Create Slack App
+1. Go to [Slack API Apps](https://api.slack.com/apps)
+2. Click **"Create New App"** → **"From scratch"**
+3. Name: `K2SOBot`, select your workspace
+
+### 2. Configure Bot Scopes
+Navigate to **OAuth & Permissions** and add these scopes:
+```
+app_mentions:read
+chat:write
+commands
+im:read
+im:write
+im:history
+```
+
+### 3. Setup Webhooks
+```bash
+# For local testing only
+ngrok http 3000
+```
+
+> **⚠️ Note:** ngrok is for testing only. Production needs proper domain.
+
+Copy the HTTPS URL and configure in your Slack app:
+
+**Event Subscriptions:**
+- Request URL: `https://your-ngrok-url.ngrok-free.app/slack/events`
+- Bot events: `app_mention`, `message.im`
+
+**Interactivity & Shortcuts:**
+- Request URL: `https://your-ngrok-url.ngrok-free.app/interactions`
+
+**Slash Commands:**
+- Command: `/k2sobot`
+- Request URL: `https://your-ngrok-url.ngrok-free.app/k2sobot`
+
+## 📱 Usage Examples
+
+### Interactive kubectl Menu
+```
+/k2sobot
+```
+or
+```
+@k2sobot
+```
+
+Both trigger an interactive menu:
+1. **Select operation** → `get`, `describe`, `logs`, `rollout restart`
+2. **Choose resource** → `pods`, `services`, `deployments`, `nodes`
+3. **Pick namespace** → Dynamic list of available namespaces
+4. **Select resource** → Real-time filtered list
+5. **Get results** → Formatted output in Slack
+
+### AI Chat (Direct Messages)
+
+**Natural Language Examples:**
+```
+"What time is it in UTC?"
+"List all pods in the kube-system namespace" 
+"Show me ArgoCD applications that are out of sync"
+"Get logs from the nginx pod with last 100 lines"
+"Tell me a programming joke"
+```
+
+**Quick Commands:**
+```
+kubectl     # Shows kubectl menu in DM
+k8s         # Shows kubectl menu in DM  
+/kubectl    # Shows kubectl menu in DM
+```
+
+## 🛠️ Available Tools
+
+<details>
+<summary><strong>⏰ Time & Utility Tools</strong></summary>
+
+- `get_current_time()` - Current date, time, and day of week
+- `get_timestamp()` - Unix timestamp for automation
+- `get_random_joke()` - Programming humor for team morale
+
+</details>
+
+<details>
+<summary><strong>⚓ Kubernetes Tools</strong></summary>
+
+- `get_namespaces()` - List all available namespaces
+- `get_pods(namespace)` - List pods in specific namespace
+- `get_deployments(namespace)` - List deployments with status
+- `get_pod_logs(pod_name, namespace, lines)` - Retrieve pod logs
+- `describe_pod(pod_name, namespace)` - Detailed pod information
+
+</details>
+
+<details>
+<summary><strong>🚀 ArgoCD GitOps Tools</strong></summary>
+
+- `list_applications()` - Show all ArgoCD applications
+- `get_application_status(app_name)` - Application sync/health status
+- `get_application_revisions(app_name)` - Deployment history
+- `sync_application(app_name)` - Trigger application sync
+
+</details>
+
+## 🔧 Adding Custom Tools
+
+K2SOBot uses an **auto-discovery tool system**. Adding new functionality is simple:
+
+### 1. Create Tool File
+Simply create a new Python file in the `tools/` directory:
+
+```python
+# tools/my_custom_tools.py
+def example_tool():
+    """
+    Example tool showing how to create custom functionality
+    
+    Returns:
+        Simple example output
+    """
+    # Your tool logic here
+    return "Hello tool!"
+```
+
+### 2. Restart Bot
+That's it! The tool will be **automatically discovered** and available to Gemini AI.
+
+> **✨ Auto-Discovery:** No imports or registration needed. The registry scans all `.py` files in `tools/` directory.
+
+## 🐳 Docker Configuration
+
+The included `Dockerfile` is production-ready and optimized:
+
+- 🏗️ **Multi-layer optimization** for faster builds
+- 🔐 **Non-root user** for security
+- 📦 **Minimal dependencies** (only curl for downloads)
+- ⚓ **kubectl & ArgoCD CLI** pre-installed
+- 🧹 **Clean build** with `.dockerignore`
+
+### Build & Deploy
+```bash
+# Development
+docker build -t k2sobot:dev .
+docker run -p 3000:3000 --env-file .env k2sobot:dev
+
+# Production with docker-compose
+docker-compose up -d
+```
+
+## 📊 Project Structure
+
+```
+k2sobot/
+├── 🐳 Dockerfile              # Production container config
+├── 📋 requirements.txt        # Python dependencies
+├── 🌐 main.py                 # Flask app & Slack handlers
+├── 🤖 gemini_integration.py   # AI chat with function calling
+├── 🛠️ handlers.py             # Interactive Slack components
+├── ⚓ k8s.py                  # Kubernetes operations wrapper
+├── 💬 slack_blocks.py         # Slack UI block builders
+├── 🔗 shared_state.py         # Cross-module state management
+└── 🧰 tools/                  # Modular tool system
+    ├── 📝 __init__.py
+    ├── 🔍 registry.py          # Auto-discovery engine
+    ├── ⏰ time_tools.py         # Time utilities
+    ├── 😄 joke_tools.py         # Programming humor
+    ├── ⚓ k8s_tools.py          # Kubernetes operations
+    └── 🚀 argo.py              # ArgoCD GitOps tools
+```
+
+<div align="center">
+
+</div>
