@@ -7,6 +7,10 @@
 > 
 > Combines interactive kubectl operations with Google Gemini AI for natural language DevOps interactions.
 
+
+![gif3](https://github.com/user-attachments/assets/bdf96f06-b4d5-4809-963c-451c34a42ec7)
+
+
 ## ✨ Features
 
 🤖 **AI-Powered Chat** - Natural language conversations with Google Gemini 2.5 Flash Lite  
@@ -20,7 +24,7 @@
 
 ```mermaid
 graph TB
-    A[Slack User] -->|"@k2sobot or /k2sobot"| B[Flask Server :3000]
+    A[Slack User] -->|"@k2sobot"| B[Flask Server :3000]
     B --> C{Request Type}
     C -->|Interactive Menu| D[kubectl Operations]
     C -->|Natural Language| E[Gemini AI + Tools]
