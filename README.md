@@ -8,8 +8,6 @@
 > Combines interactive kubectl operations with Google Gemini AI for natural language DevOps interactions.
 
 
-![gif3](https://github.com/user-attachments/assets/bdf96f06-b4d5-4809-963c-451c34a42ec7)
-
 
 ## ✨ Features
 
