@@ -188,9 +188,10 @@ Both trigger an interactive menu:
 <summary><strong>🚀 ArgoCD GitOps Tools</strong></summary>
 
 - `get_applications()` - List all ArgoCD applications
-- `get_application_status(app_name)` - Get application sync/health status  
-- `get_application_revisions(app_name, limit)` - Show revision history
-- `rollout_application(app_name, revision)` - Rollback to specific revision
+- `get_application_status(app_name)` - Get application sync/health status
+- `get_application_history(app_name)` - Get application revision history
+- `get_application_revisions(app_name)` - Get available revisions for rollback
+- `sync_application(app_name, revision)` - Sync application with optional revision
 
 </details>
 
@@ -247,6 +248,7 @@ python3 main.py
 
 ```
 k2sobot/
+├── 🚀 argo.py                  # ArgoCD operations wrapper
 ├── 🐳 Dockerfile              # Production container config
 ├── 📋 requirements.txt        # Python dependencies
 ├── 🌐 main.py                 # Flask app & Slack handlers
@@ -261,7 +263,7 @@ k2sobot/
     ├── ⏰ time_tools.py         # Time utilities
     ├── 😄 joke_tools.py         # Programming humor
     ├── ⚓ k8s_tools.py          # Kubernetes operations
-    └── 🚀 argo.py              # ArgoCD GitOps tools
+    └── 🚀 argo_tool.py         # ArgoCD GitOps tools
 ```
 
 <div align="center">
