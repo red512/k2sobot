@@ -228,7 +228,7 @@ That's it! The tool will be **automatically discovered** and available to Gemini
 
 > **✨ Auto-Discovery:** No imports or registration needed. The registry scans all `.py` files in `tools/` directory.
 
-### 🐳 Docker (Recommended)
+<!-- ### 🐳 Docker (Recommended)
 
 ```bash
 # Clone the repository
@@ -246,7 +246,7 @@ docker run -d \
   -e VERIFICATION_TOKEN="your_verification_token" \
   -e GEMINI_API_KEY="your_gemini_api_key" \
   --name k2sobot \
-  k2sobot
+  k2sobot -->
 ```
 
 ### 🐍 Local Development
