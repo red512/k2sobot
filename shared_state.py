@@ -3,12 +3,13 @@ from collections import defaultdict, deque
 
 selected_actions = {}
 slack_client = None
-available_commands = ["get", "describe", "logs", "rollout restart"]
+available_commands = ["get", "describe", "logs", "rollout restart", "argo"]
 available_sub_commands = {
     "get": ["pods", "nodes", "services"],
     "describe": ["pods"],
     "logs": ["pods"],
-    "rollout restart": ["deployments"]
+    "rollout restart": ["deployments"],
+    "argo": ["status", "revisions", "rollback"]
 }
 
 # Conversation history management - keep last 10 messages per user

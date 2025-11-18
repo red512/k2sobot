@@ -186,3 +186,82 @@ def build_namesapces_block(available_namespaces):
             }
         ]
     }
+
+
+def build_argo_applications_block(available_applications):
+    return {
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "🚀 Please select an ArgoCD application:"
+                },
+                "accessory": {
+                    "type": "image",
+                    "image_url": "https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/assets/logo.png",
+                    "alt_text": "ArgoCD logo"
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "static_select",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Select an application"
+                        },
+                        "options": [
+                            {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": app
+                                },
+                                "value": app
+                            }
+                            for app in available_applications
+                        ],
+                        "action_id": "argo_app_select"
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def build_argo_revisions_block(available_revisions):
+    return {
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "🔄 Please select a revision to rollback to:"
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "static_select",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Select a revision"
+                        },
+                        "options": [
+                            {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": f"Revision {revision}"
+                                },
+                                "value": revision
+                            }
+                            for revision in available_revisions
+                        ],
+                        "action_id": "argo_revision_select"
+                    }
+                ]
+            }
+        ]
+    }

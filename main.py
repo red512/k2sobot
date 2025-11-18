@@ -131,6 +131,12 @@ def handle_interactions():
     elif action_id == "kubectl_deployment_select":
         handlers.handle_kubectl_deployment_select(payload, channel_id)
 
+    elif action_id == "argo_app_select":
+        handlers.handle_argo_app_select(payload, channel_id)
+
+    elif action_id == "argo_revision_select":
+        handlers.handle_argo_revision_select(payload, channel_id)
+
     return Response(status=200)
 
 @app.route("/health", methods=["GET"])

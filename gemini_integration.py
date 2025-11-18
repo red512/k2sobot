@@ -80,14 +80,25 @@ def chat_with_gemini(user_message, user_id=None, max_tokens=1000):
                 result = execute_function_call(function_call)
                 
                 logger.info(f"✅ Function result: {result}")
-                
+
+                # Ensure result is properly formatted for Gemini API
+                # If result is a list, convert it to a dict with a meaningful key
+                if isinstance(result, list):
+                    formatted_result = {"items": result}
+                elif not isinstance(result, dict):
+                    # For strings, numbers, etc., wrap in a dict
+                    formatted_result = {"value": result}
+                else:
+                    # Already a dict, use as-is
+                    formatted_result = result
+
                 # Send result back to Gemini for formatting
                 response = chat.send_message(
                     content_types.to_content({
                         "parts": [{
                             "function_response": {
                                 "name": function_name,
-                                "response": result
+                                "response": formatted_result
                             }
                         }]
                     })
