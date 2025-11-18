@@ -169,6 +169,7 @@ Both trigger an interactive menu:
 **Natural Language Examples:**
 ![show_namespaces_LLM](https://github.com/user-attachments/assets/dda120c7-cb67-4215-a0c2-f56b64d3434c)
 
+![show_pods_LLM](https://github.com/user-attachments/assets/a6c27dea-aba2-40dc-9343-3c99506c7c63)
 
 ## 🛠️ Available Tools
 
