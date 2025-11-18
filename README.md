@@ -52,15 +52,6 @@ graph TB
 - 🌐 **ngrok** (for Slack webhook tunneling)
 - 💬 **Slack workspace** with admin permissions
 
-### 🐳 Docker (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/red512/k2sobot.git
-cd k2sobot
-
-# Build the Docker image
-docker build -t k2sobot .
 
 ### 🐍 Local Development
 
