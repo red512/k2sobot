@@ -147,19 +147,20 @@ Both trigger an interactive menu:
 5. **Get results** → Formatted output in Slack
 
 > ** Examples of interactive commands**
-![argo_app_status](https://github.com/user-attachments/assets/f723a1a8-fe9a-413e-be5f-5c15347921c0)
 
-![rollback_argo](https://github.com/user-attachments/assets/d6f4f4dc-f14b-4bf7-aa05-8250f2f7a018)
+argo rollout command
+![rollout_LLM](https://github.com/user-attachments/assets/96524d95-e1ec-44f6-8baf-e84fd14deeb5)
 
-![descibe_pod](https://github.com/user-attachments/assets/90f52109-29a5-4529-a57a-2005b6d639fd)
-
+argo app status
+![show_argo_app_status](https://github.com/user-attachments/assets/c779f335-dae1-46a3-9004-6c484d2ec93d)
 
 
 ### AI Chat (Direct Messages)
-
 **Natural Language Examples:**
+show namespaces
 ![show_namespaces_LLM](https://github.com/user-attachments/assets/dda120c7-cb67-4215-a0c2-f56b64d3434c)
 
+show pods
 ![show_pods_LLM](https://github.com/user-attachments/assets/a6c27dea-aba2-40dc-9343-3c99506c7c63)
 
 ## 🛠️ Available Tools
@@ -168,7 +169,6 @@ Both trigger an interactive menu:
 <summary><strong>⏰ Time & Utility Tools</strong></summary>
 
 - `get_current_time()` - Current date, time, and day of week
-- `get_timestamp()` - Unix timestamp for automation
 - `get_random_joke()` - Programming humor for team morale
 
 </details>
