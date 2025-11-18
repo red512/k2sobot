@@ -124,17 +124,13 @@ Copy the HTTPS URL and configure in your Slack app:
 **Interactivity & Shortcuts:**
 - Request URL: `https://your-ngrok-url.ngrok-free.app/interactions`
 
-**Slash Commands:**
-- Command: `/k2sobot`
+
 - Request URL: `https://your-ngrok-url.ngrok-free.app/k2sobot`
 
 ## 📱 Usage Examples
 
 ### Interactive kubectl Menu
-```
-/k2sobot
-```
-or
+
 ```
 @k2sobot
 ```
