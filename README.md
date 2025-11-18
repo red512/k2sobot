@@ -7,18 +7,7 @@
 > 
 > Combines interactive kubectl operations with Google Gemini AI for natural language DevOps interactions.
 
-
-> ** Examples of interactive commands**
-![argo_app_status](https://github.com/user-attachments/assets/f723a1a8-fe9a-413e-be5f-5c15347921c0)
-
-![rollback_argo](https://github.com/user-attachments/assets/d6f4f4dc-f14b-4bf7-aa05-8250f2f7a018)
-
-![descibe_pod](https://github.com/user-attachments/assets/90f52109-29a5-4529-a57a-2005b6d639fd)
-
-
 > ** Examples of using tools powered by Gemini LLM
-
-
 
 ## ✨ Features
 
@@ -166,23 +155,20 @@ Both trigger an interactive menu:
 4. **Select resource** → Real-time filtered list
 5. **Get results** → Formatted output in Slack
 
+> ** Examples of interactive commands**
+![argo_app_status](https://github.com/user-attachments/assets/f723a1a8-fe9a-413e-be5f-5c15347921c0)
+
+![rollback_argo](https://github.com/user-attachments/assets/d6f4f4dc-f14b-4bf7-aa05-8250f2f7a018)
+
+![descibe_pod](https://github.com/user-attachments/assets/90f52109-29a5-4529-a57a-2005b6d639fd)
+
+
+
 ### AI Chat (Direct Messages)
 
 **Natural Language Examples:**
-```
-"What time is it in UTC?"
-"List all pods in the kube-system namespace" 
-"Show me ArgoCD applications that are out of sync"
-"Get logs from the nginx pod with last 100 lines"
-"Tell me a programming joke"
-```
+![show_namespaces_LLM](https://github.com/user-attachments/assets/dda120c7-cb67-4215-a0c2-f56b64d3434c)
 
-**Quick Commands:**
-```
-kubectl     # Shows kubectl menu in DM
-k8s         # Shows kubectl menu in DM  
-/kubectl    # Shows kubectl menu in DM
-```
 
 ## 🛠️ Available Tools
 
