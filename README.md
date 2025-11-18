@@ -1,4 +1,4 @@
-# K2SOBot 🤖⚓
+    # K2SOBot 🤖⚓
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-Latest-green.svg)](https://flask.palletsprojects.com/)
@@ -6,6 +6,17 @@
 > 🚀 **AI-Powered Slack Bot for Kubernetes & GitOps Operations** 
 > 
 > Combines interactive kubectl operations with Google Gemini AI for natural language DevOps interactions.
+
+
+> ** Examples of interactive commands**
+![argo_app_status](https://github.com/user-attachments/assets/f723a1a8-fe9a-413e-be5f-5c15347921c0)
+
+![rollback_argo](https://github.com/user-attachments/assets/d6f4f4dc-f14b-4bf7-aa05-8250f2f7a018)
+
+![descibe_pod](https://github.com/user-attachments/assets/90f52109-29a5-4529-a57a-2005b6d639fd)
+
+
+> ** Examples of using tools powered by Gemini LLM
 
 
 
