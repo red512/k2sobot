@@ -196,10 +196,10 @@ Both trigger an interactive menu:
 <details>
 <summary><strong>🚀 ArgoCD GitOps Tools</strong></summary>
 
-- `list_applications()` - Show all ArgoCD applications
-- `get_application_status(app_name)` - Application sync/health status
-- `get_application_revisions(app_name)` - Deployment history
-- `sync_application(app_name)` - Trigger application sync
+- `get_applications()` - List all ArgoCD applications
+- `get_application_status(app_name)` - Get application sync/health status  
+- `get_application_revisions(app_name, limit)` - Show revision history
+- `rollout_application(app_name, revision)` - Rollback to specific revision
 
 </details>
 
@@ -228,24 +228,49 @@ That's it! The tool will be **automatically discovered** and available to Gemini
 
 > **✨ Auto-Discovery:** No imports or registration needed. The registry scans all `.py` files in `tools/` directory.
 
-## 🐳 Docker Configuration
+### 🐳 Docker (Recommended)
 
-The included `Dockerfile` is production-ready and optimized:
-
-- 🏗️ **Multi-layer optimization** for faster builds
-- 🔐 **Non-root user** for security
-- 📦 **Minimal dependencies** (only curl for downloads)
-- ⚓ **kubectl & ArgoCD CLI** pre-installed
-- 🧹 **Clean build** with `.dockerignore`
-
-### Build & Deploy
 ```bash
-# Development
-docker build -t k2sobot:dev .
-docker run -p 3000:3000 --env-file .env k2sobot:dev
+# Clone the repository
+git clone https://github.com/red512/k2sobot.git
+cd k2sobot
 
-# Production with docker-compose
-docker-compose up -d
+# Build the Docker image
+docker build -t k2sobot .
+
+# Run with environment variables
+docker run -d \
+  -p 3000:3000 \
+  -e SLACK_SIGNING_SECRET="your_slack_signing_secret" \
+  -e SLACK_BOT_TOKEN="xoxb-your_bot_token" \
+  -e VERIFICATION_TOKEN="your_verification_token" \
+  -e GEMINI_API_KEY="your_gemini_api_key" \
+  --name k2sobot \
+  k2sobot
+```
+
+### 🐍 Local Development
+
+```bash
+# Clone and setup
+git clone https://github.com/red512/k2sobot.git
+cd k2sobot
+
+# Create virtual environment
+python3 -m venv env
+source env/bin/activate  # Windows: env\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export SLACK_SIGNING_SECRET="your_slack_signing_secret"
+export SLACK_BOT_TOKEN="xoxb-your_bot_token"
+export VERIFICATION_TOKEN="your_verification_token"
+export GEMINI_API_KEY="your_gemini_api_key"
+
+# Run the bot
+python3 main.py
 ```
 
 ## 📊 Project Structure

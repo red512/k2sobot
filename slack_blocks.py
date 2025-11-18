@@ -5,7 +5,7 @@ def build_kubectl_options_block(user_id, available_commands):
                 "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": f"\nHello <@{user_id}>! Select a kubectl command:\n\n"
+                            "text": f"\nHello <@{user_id}>! Please select a command:\n\n"
                         },
                 "accessory": {
                             "type": "image",
